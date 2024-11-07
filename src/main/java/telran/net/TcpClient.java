@@ -4,6 +4,7 @@ import java.net.*;
 import java.time.Instant;
 import java.io.*;
 import org.json.JSONObject;
+import telran.net.exceptions.*;
 
 import static telran.net.TCPConfigurationProperties.*;
 
@@ -56,6 +57,9 @@ public class TcpClient implements Closeable{
     public String sendAndReceive(String requestType, String requestData) {
         Request request = new Request(requestType, requestData);
         try {
+            if (socket == null) {
+                throw new ServerUnavailableException(host, port);
+            }
             writer.println(request);
             String responseJSON = reader.readLine();
             JSONObject jsonObject = new JSONObject(responseJSON);
@@ -66,7 +70,7 @@ public class TcpClient implements Closeable{
             }
             return responseData;
         } catch (IOException e) {
-            throw new RuntimeException("Server is unavailable");
+            throw new ServerUnavailableException(host, port);
         } 
     }
 }
