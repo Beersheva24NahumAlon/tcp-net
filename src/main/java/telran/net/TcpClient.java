@@ -42,6 +42,9 @@ public class TcpClient implements Closeable{
                 count--;
             }
         } while (count > 0);
+        if (socket == null) {
+            throw new ServerUnavailableException(host, port);
+        }
     }
 
     private void waitForInterval() {
@@ -51,7 +54,9 @@ public class TcpClient implements Closeable{
 
     @Override
     public void close() throws IOException {
-        socket.close();
+        if (socket != null) {
+            socket.close();
+        }
     }
 
     public String sendAndReceive(String requestType, String requestData) {
@@ -70,6 +75,7 @@ public class TcpClient implements Closeable{
             }
             return responseData;
         } catch (IOException e) {
+            connect();
             throw new ServerUnavailableException(host, port);
         } 
     }
