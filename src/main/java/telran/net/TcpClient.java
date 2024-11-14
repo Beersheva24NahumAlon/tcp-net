@@ -8,7 +8,7 @@ import telran.net.exceptions.*;
 
 import static telran.net.TCPConfigurationProperties.*;
 
-public class TcpClient implements Closeable{
+public class TcpClient implements Closeable, NetworkClient {
     Socket socket;
     PrintStream writer;
     BufferedReader reader;
@@ -59,6 +59,7 @@ public class TcpClient implements Closeable{
         }
     }
 
+    @Override
     public String sendAndReceive(String requestType, String requestData) {
         Request request = new Request(requestType, requestData);
         try {
