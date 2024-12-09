@@ -61,8 +61,4 @@ public class TcpClientServerSession implements Runnable {
         JSONObject jsonObject = new JSONObject(response);
         return jsonObject.getString(RESPONSE_CODE_FIELD);
     }
-
-    public void setCloseSession(boolean closeSession) {
-        this.closeSession = closeSession;
-    }
 }
