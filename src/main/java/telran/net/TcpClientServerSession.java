@@ -3,7 +3,6 @@ package telran.net;
 import java.net.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import org.json.JSONObject;
 import static telran.net.TCPConfigurationProperties.*;
 import java.io.*;
 
@@ -12,42 +11,34 @@ public class TcpClientServerSession implements Runnable {
     Socket socket;
     int totalTimeout = 0;
     int badResponses = 0;
-    int requests = 0;
-    boolean closeSession = false;
+    int requestsPerSecond = 0;
+    Instant start = Instant.now();
+    TcpServer server;
 
-    public TcpClientServerSession(Protocol protocol, Socket socket) {
+    public TcpClientServerSession(Protocol protocol, Socket socket, TcpServer server) {
         this.protocol = protocol;
         this.socket = socket;
+        this.server = server;
     }
 
     @Override
     public void run() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 PrintStream writer = new PrintStream(socket.getOutputStream())) {
-            String request = "";
-            socket.setSoTimeout(TIMEOUT);
-            Instant start = Instant.now();
-            while (!closeSession) {
+            String request = null;
+            while (!server.executor.isShutdown() && !isTotalTimeout()) {
                 try {
                     request = reader.readLine();
+                    if (request == null || isRequestsPerSecond()) {
+                        break;
+                    }
                     String response = protocol.getResponseWithJSON(request);
+                    if (isBadResponses(response)) {
+                        break;
+                    }
                     writer.println(response);
-                    requests++;
-                    if (!getStatusResponse(response).equals("OK")) {
-                        badResponses++;
-                    }
-                    totalTimeout = 0;   
+                    totalTimeout = 0;
                 } catch (SocketTimeoutException e) {
-                    Instant finish = Instant.now();
-                    long requestsPerSecond = 0;
-                    if (ChronoUnit.SECONDS.between(start, finish) == 1) {
-                        requestsPerSecond = requests;
-                        requests = 0;
-                        start = Instant.now();
-                    }
-                    if (totalTimeout > TOTAL_TIMEOUT || badResponses > BAD_RESPONSES || requestsPerSecond > REQUESTS_PER_SECOND) {
-                        closeSession = true;
-                    }
                     totalTimeout += TIMEOUT;
                 }
             }
@@ -57,8 +48,24 @@ public class TcpClientServerSession implements Runnable {
         }
     }
 
-    private String getStatusResponse(String response) {
-        JSONObject jsonObject = new JSONObject(response);
-        return jsonObject.getString(RESPONSE_CODE_FIELD);
+    private boolean isRequestsPerSecond() {
+        Instant current = Instant.now();
+        if (ChronoUnit.SECONDS.between(start, current) == 1 ) {
+            requestsPerSecond = 0;
+            start = current;
+        } else {
+            requestsPerSecond++;
+        }
+        return requestsPerSecond > server.requestsPerSecond;
     }
+
+    private boolean isBadResponses(String response) {
+        badResponses = response.contains("OK") ? 0 : badResponses + 1;
+        return badResponses > server.badResponses;
+    }
+
+    private boolean isTotalTimeout() {
+        return totalTimeout > server.totalTimeout;
+    }
+
 }

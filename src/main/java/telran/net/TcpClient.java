@@ -68,6 +68,9 @@ public class TcpClient implements Closeable, NetworkClient {
             }
             writer.println(request);
             String responseJSON = reader.readLine();
+            if (responseJSON == null) {
+                throw new ServerUnavailableException(host, port);
+            }
             JSONObject jsonObject = new JSONObject(responseJSON);
             ResponseCode responseCode = jsonObject.getEnum(ResponseCode.class, RESPONSE_CODE_FIELD);
             String responseData = jsonObject.getString(RESPONSE_DATA_FIELD);

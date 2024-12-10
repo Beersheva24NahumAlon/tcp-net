@@ -1,7 +1,6 @@
 package telran.net;
 
-import static telran.net.TCPConfigurationProperties.TIMEOUT;
-
+import static telran.net.TCPConfigurationProperties.*;
 import java.net.*;
 import java.util.concurrent.*;
 
@@ -9,11 +8,17 @@ public class TcpServer implements Runnable {
     Protocol protocol;
     int port;
     ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    boolean gracefulShutdown = false;
+    int badResponses;
+    int requestsPerSecond;
+    int totalTimeout;
 
-    public TcpServer(Protocol protocol, int port) {
+
+    public TcpServer(Protocol protocol, int port, int badResponses, int requestsPerSecond, int totalTimeout) {
         this.protocol = protocol;
         this.port = port;
+        this.badResponses = badResponses;
+        this.requestsPerSecond = requestsPerSecond;
+        this.totalTimeout = totalTimeout;
     }
 
     @Override
@@ -21,16 +26,13 @@ public class TcpServer implements Runnable {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             serverSocket.setSoTimeout(TIMEOUT);
             System.out.println("Server is listening the port " + port);
-            while (!gracefulShutdown) {
+            while (!executor.isShutdown()) {
                 try {
                     Socket socket = serverSocket.accept();
-                    var session = new TcpClientServerSession(protocol, socket);
-                    Thread thread = new Thread(session);
-                    executor.execute(thread);
+                    socket.setSoTimeout(TIMEOUT);
+                    var session = new TcpClientServerSession(protocol, socket, this);
+                    executor.execute(session);
                 } catch (SocketTimeoutException e) {
-                    if (gracefulShutdown) {
-                        executor.shutdownNow();
-                    }
                 }
             }
         } catch (Exception e) {
@@ -39,6 +41,6 @@ public class TcpServer implements Runnable {
     }
 
     public void shutdown() {
-        gracefulShutdown = true;
+        executor.shutdownNow();
     }
 }
