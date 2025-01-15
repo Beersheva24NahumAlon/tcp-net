@@ -39,7 +39,7 @@ public class TcpClientServerSession implements Runnable {
                     }
                     writer.println(response);
                 } catch (SocketTimeoutException e) {
-                    totalTimeout += TIMEOUT;
+                    totalTimeout += SOCKET_TIMEOUT;
                 }
             }
             socket.close();

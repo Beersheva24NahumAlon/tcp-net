@@ -41,7 +41,7 @@ public class TcpClient implements Closeable, NetworkClient {
                 waitForInterval();
                 count--;
             }
-        } while (count > 0);
+        } while (count != 0);
         if (socket == null) {
             throw new ServerUnavailableException(host, port);
         }

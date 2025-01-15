@@ -24,12 +24,12 @@ public class TcpServer implements Runnable {
     @Override
     public void run() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            serverSocket.setSoTimeout(TIMEOUT);
+            serverSocket.setSoTimeout(SOCKET_TIMEOUT);
             System.out.println("Server is listening the port " + port);
             while (!executor.isShutdown()) {
                 try {
                     Socket socket = serverSocket.accept();
-                    socket.setSoTimeout(TIMEOUT);
+                    socket.setSoTimeout(SOCKET_TIMEOUT);
                     var session = new TcpClientServerSession(protocol, socket, this);
                     executor.execute(session);
                 } catch (SocketTimeoutException e) {
