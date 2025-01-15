@@ -63,7 +63,7 @@ public class TcpClient implements Closeable, NetworkClient {
     public String sendAndReceive(String requestType, String requestData) {
         Request request = new Request(requestType, requestData);
         try {
-            if (socket == null) {
+            if (socket == null) { 
                 throw new ServerUnavailableException(host, port);
             }
             writer.println(request);

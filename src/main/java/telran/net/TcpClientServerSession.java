@@ -29,6 +29,7 @@ public class TcpClientServerSession implements Runnable {
             while (!server.executor.isShutdown() && !isTotalTimeout()) {
                 try {
                     request = reader.readLine();
+                    totalTimeout = 0;
                     if (request == null || isRequestsPerSecond()) {
                         break;
                     }
@@ -37,7 +38,6 @@ public class TcpClientServerSession implements Runnable {
                         break;
                     }
                     writer.println(response);
-                    totalTimeout = 0;
                 } catch (SocketTimeoutException e) {
                     totalTimeout += TIMEOUT;
                 }
@@ -50,7 +50,7 @@ public class TcpClientServerSession implements Runnable {
 
     private boolean isRequestsPerSecond() {
         Instant current = Instant.now();
-        if (ChronoUnit.SECONDS.between(start, current) == 1 ) {
+        if (ChronoUnit.SECONDS.between(start, current) > 1 ) {
             requestsPerSecond = 0;
             start = current;
         } else {
@@ -67,5 +67,4 @@ public class TcpClientServerSession implements Runnable {
     private boolean isTotalTimeout() {
         return totalTimeout > server.totalTimeout;
     }
-
 }
