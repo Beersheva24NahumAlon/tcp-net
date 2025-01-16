@@ -7,18 +7,19 @@ import java.util.concurrent.*;
 public class TcpServer implements Runnable {
     Protocol protocol;
     int port;
-    ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    ExecutorService executor;
     int badResponses;
     int requestsPerSecond;
     int totalTimeout;
 
 
-    public TcpServer(Protocol protocol, int port, int badResponses, int requestsPerSecond, int totalTimeout) {
+    public TcpServer(Protocol protocol, int port, int badResponses, int requestsPerSecond, int totalTimeout, int nThreads) {
         this.protocol = protocol;
         this.port = port;
         this.badResponses = badResponses;
         this.requestsPerSecond = requestsPerSecond;
         this.totalTimeout = totalTimeout;
+        this.executor = Executors.newFixedThreadPool(nThreads);
     }
 
     @Override

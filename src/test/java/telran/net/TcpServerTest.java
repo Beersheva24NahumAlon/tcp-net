@@ -6,7 +6,7 @@ public class TcpServerTest {
 
     public static void main(String[] args) {
         Protocol protocol = new ProtocolTest();
-        TcpServer server = new TcpServer(protocol, 4000, 20, 100, 40000);
+        TcpServer server = new TcpServer(protocol, 4000, 20, 100, 40000, 4);
         Thread threadServer = new Thread(server);
         threadServer.start();
         Scanner scanner = new Scanner(System.in); 
